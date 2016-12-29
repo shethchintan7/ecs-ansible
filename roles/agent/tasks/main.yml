@@ -9,10 +9,17 @@
 - debug:
     msg: "{{ (ecs_info.stdout|from_json).ContainerInstanceArn }}"
 
+- name: Get ec2 information
+  action: uri
+      method=GET
+      status_code=200
+      url="http://169.254.169.254/latest/dynamic/instance-identity/document" return_content=yes
+  register: ec2_info
+
 - name: trigger lambda    
   uri: 
-    url: "{{ lookup('env','lambda_url') }}"
+    url: "{{ lookup('env','lambda_url') }}/{{ (ec2_info.content|from_json).instanceId }}"
     method: POST
     return_content: yes
     HEADER_Content-Type: "application/json"
-    body: ' { "ContainerInstanceArn":"{{ (ecs_info.stdout|to_json).ContainerInstanceArn }}" } '
+    body: ' { "ContainerInstanceArn":"{{ (ecs_info.stdout|from_json).ContainerInstanceArn }}" } '

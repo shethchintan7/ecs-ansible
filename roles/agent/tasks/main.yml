@@ -1,0 +1,18 @@
+---
+- name: make sure utility stacks are running
+  action: uri
+      method=GET
+      status_code=200
+      url="http://localhost:51678/v1/metadata" return_content=yes
+  register: ecs_info
+  until: ecs_info.find("ContainerInstanceArn") != -1
+  retries: 30
+  delay: 10
+
+- name: trigger lambda    
+  uri: 
+    url: "{{ lookup('env','lambda_url') }}"
+    method: POST
+    return_content: yes
+    HEADER_Content-Type: "application/json"
+    body: ' {{ ecs_info }} '
